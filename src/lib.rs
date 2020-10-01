@@ -108,15 +108,18 @@ impl BcdTable {
     }
 
     fn get_nibble(&self, c: u8) -> Option<u8> {
-        for d in &self.table {
+        let mut i: usize = 0;
+        for i in 0..self.table.len() {
+            let d = &self.table[i];
             if let Digit::Char(x) = d {
                 if *x == c {
-                    return d;
+                    return Some(i as u8);
                 }
             }
         }
-        &Digit::Empty
+        None
     }
+
     fn encode(&self, s: &str, v: &mut Vec<u8>) -> Option<EncodeError> {
         Some(EncodeError::ErrNonEncodable)
     }

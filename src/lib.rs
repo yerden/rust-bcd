@@ -1,10 +1,22 @@
-use anyhow::Result;
-
 #[cfg(test)]
 mod tests {
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn bcd_table_test() {
+        assert_eq!(super::STD8421.get_nibble('0' as u8), Some(0));
+        assert_eq!(super::STD8421.get_nibble('1' as u8), Some(1));
+        assert_eq!(super::STD8421.get_nibble('2' as u8), Some(2));
+        assert_eq!(super::STD8421.get_nibble('3' as u8), Some(3));
+        assert_eq!(super::STD8421.get_nibble('4' as u8), Some(4));
+        assert_eq!(super::STD8421.get_nibble('5' as u8), Some(5));
+        assert_eq!(super::STD8421.get_nibble('6' as u8), Some(6));
+        assert_eq!(super::STD8421.get_nibble('7' as u8), Some(7));
+        assert_eq!(super::STD8421.get_nibble('8' as u8), Some(8));
+        assert_eq!(super::STD8421.get_nibble('9' as u8), Some(9));
     }
 }
 
@@ -107,16 +119,17 @@ impl BcdTable {
         STD8421
     }
 
+    // retrieve a nibble that encodes given symbol
+    // e.g. '7' -> 7 for 8421 encoding
     fn get_nibble(&self, c: u8) -> Option<u8> {
-        let mut i: usize = 0;
         for i in 0..self.table.len() {
-            let d = &self.table[i];
-            if let Digit::Char(x) = d {
+            if let Digit::Char(x) = &self.table[i] {
                 if *x == c {
                     return Some(i as u8);
                 }
             }
         }
+
         None
     }
 

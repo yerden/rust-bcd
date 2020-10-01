@@ -13,19 +13,19 @@ enum EncodeError {
 }
 
 #[derive(Copy, Clone)]
-pub(crate) enum Digit {
-    Char(u8),
-    Filler,
-    Empty,
+enum Digit {
+    Char(u8), // symbol
+    Filler,   // filler nibble if bytes count is odd
+    Empty,    // invalid nibble
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct BcdTable {
+struct BcdTable {
     table: [Digit; 16],
     swap_nibbles: bool,
 }
 
-pub(crate) const STD8421: BcdTable = BcdTable {
+const STD8421: BcdTable = BcdTable {
     table: [
         Digit::Char(b'0'), // 0
         Digit::Char(b'1'), // 1
@@ -48,7 +48,7 @@ pub(crate) const STD8421: BcdTable = BcdTable {
     swap_nibbles: false,
 };
 
-pub(crate) const TELEPHONY: BcdTable = BcdTable {
+const TELEPHONY: BcdTable = BcdTable {
     table: [
         Digit::Char(b'0'), // 0
         Digit::Char(b'1'), // 1
@@ -71,7 +71,7 @@ pub(crate) const TELEPHONY: BcdTable = BcdTable {
     swap_nibbles: true,
 };
 
-pub(crate) const AIKEN: BcdTable = BcdTable {
+const AIKEN: BcdTable = BcdTable {
     table: [
         Digit::Char(b'0'), // 0
         Digit::Char(b'1'), // 1
@@ -95,25 +95,31 @@ pub(crate) const AIKEN: BcdTable = BcdTable {
 };
 
 impl BcdTable {
-    fn get_nibble(&self, c: u8) -> Digit {
+    fn new_telephony() -> BcdTable {
+        TELEPHONY
+    }
+
+    fn new_aiken() -> BcdTable {
+        AIKEN
+    }
+
+    fn new_std8421() -> BcdTable {
+        STD8421
+    }
+
+    fn get_nibble(&self, c: u8) -> Option<u8> {
         for d in &self.table {
             if let Digit::Char(x) = d {
-                if x == c {
-                    *d
+                if *x == c {
+                    return d;
                 }
             }
         }
-        Digit::Empty
+        &Digit::Empty
     }
-    //fn encode(&self, s: &str, v: &mut Vec<u8>) -> Option<EncodeError> {
-    //for c in s.chars() {
-    //let x = c as u8
-    //if let Digit::Char(x) = c {
-    //Some(EncodeError::ErrNonEncodable)
-    //}
-    //}
-    //None
-    //}
+    fn encode(&self, s: &str, v: &mut Vec<u8>) -> Option<EncodeError> {
+        Some(EncodeError::ErrNonEncodable)
+    }
 }
 
 //

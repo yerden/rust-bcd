@@ -44,9 +44,33 @@ mod tests {
         let r = enc.encode_str(a, &mut v);
 
         assert_eq!(Ok(()), r);
-        assert_eq!(b.len(), v.len());
-        println!("{:?}", &v);
-        assert!(v.as_slice().eq(b.to_vec().as_slice()));
+        assert!(b.to_vec().eq(&v))
+    }
+
+    #[test]
+    fn bcd_table_decode_even() {
+        let a: &str = "1234567890";
+        let b: [u8; 5] = [0x12, 0x34, 0x56, 0x78, 0x90];
+
+        let enc = super::Table::new(super::Encoding::Std8421);
+        let mut s = String::new();
+        let r = enc.decode_bytes(&b, &mut s);
+
+        assert_eq!(Ok(()), r);
+        assert!(a.eq(&s));
+    }
+
+    #[test]
+    fn bcd_table_decode_odd() {
+        let a: &str = "12345678901";
+        let b: [u8; 6] = [0x12, 0x34, 0x56, 0x78, 0x90, 0x1F];
+
+        let enc = super::Table::new(super::Encoding::Std8421);
+        let mut s = String::new();
+        let r = enc.decode_bytes(&b, &mut s);
+
+        assert_eq!(Ok(()), r);
+        assert!(a.eq(&s));
     }
 
     #[test]
@@ -59,23 +83,33 @@ mod tests {
         let r = enc.encode_str(a, &mut v);
 
         assert_eq!(Ok(()), r);
-        assert_eq!(b.len(), v.len());
-        println!("{:?}", &v);
-        assert!(v.as_slice().eq(b.to_vec().as_slice()));
+        assert!(b.to_vec().eq(&v))
     }
 
     #[test]
     fn bcd_table_encode_odd_tbcd() {
-        let a: &str = "12345678901";
+        let a = String::from("12345678901");
         let b: [u8; 6] = [0x21, 0x43, 0x65, 0x87, 0x09, 0xF1];
 
         let enc = super::Table::new(super::Encoding::Telephony);
         let mut v = Vec::new();
-        let r = enc.encode_str(a, &mut v);
+        let r = enc.encode_str(&a, &mut v);
 
         assert_eq!(Ok(()), r);
-        assert_eq!(b.len(), v.len());
-        assert!(v.as_slice().eq(b.to_vec().as_slice()));
+        assert!(b.to_vec().eq(&v))
+    }
+
+    #[test]
+    fn bcd_table_decode_odd_tbcd() {
+        let a = String::from("12345678901");
+        let b: [u8; 6] = [0x21, 0x43, 0x65, 0x87, 0x09, 0xF1];
+
+        let enc = super::Table::new(super::Encoding::Telephony);
+        let mut s = String::new();
+        let r = enc.decode_bytes(&b, &mut s);
+
+        assert_eq!(Ok(()), r);
+        assert!(a.eq(&s));
     }
 
     #[test]
@@ -210,6 +244,11 @@ enum EncodeError {
     NonEncodable,
 }
 
+#[derive(Debug, PartialEq)]
+enum DecodeError {
+    NonDecodable,
+}
+
 fn put_nibble(byte: &mut u8, nibble: u8, big: bool) {
     if big {
         *byte &= 0x0F;
@@ -277,17 +316,29 @@ impl Table {
 
         Ok(())
     }
+
+    pub(crate) fn decode_bytes(&self, v: &[u8], s: &mut String) -> Result<(), DecodeError> {
+        for byte in v {
+            let mut pair: [u8; 2] = [0, 0];
+
+            if self.swap_nibbles {
+                pair[1] = (byte & 0xF0) >> 4;
+                pair[0] = byte & 0xF;
+            } else {
+                pair[0] = (byte & 0xF0) >> 4;
+                pair[1] = byte & 0xF;
+            }
+
+            for x in &pair {
+                if let Some(c) = self.table[*x as usize] {
+                    s.push(c as char);
+                } else if Some(*x) == self.filler_nibble {
+                    // don't push anything
+                } else {
+                    return Err(DecodeError::NonDecodable);
+                }
+            }
+        }
+        Ok(())
+    }
 }
-
-//
-//trait WithConstructor {
-//fn new_with_param(param: usize) -> Self;
-
-//fn new() -> Self
-//where
-//Self: Sized,
-//{
-//Self::new_with_param(0)
-//}
-//}
-//

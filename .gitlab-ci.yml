@@ -1,0 +1,16 @@
+image: rust:1.46
+
+variables:
+    MY_USERNAME: "username"
+    MY_TOKEN: "password"
+
+before_script:
+    - uname -a
+    - apt-get update -y
+
+test:
+    script:
+        - git config --global credential.helper cache
+        - echo -e "protocol=https\nhost=gitlab-pulsar.kazdream.kz\nusername=$MY_USERNAME\npassword=$MY_TOKEN\n" | git credential-cache store
+        - cargo test
+

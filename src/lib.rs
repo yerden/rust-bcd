@@ -122,6 +122,17 @@ mod tests {
 
         assert_eq!(Err(super::EncodeError::NonEncodable), r);
     }
+
+    #[test]
+    fn bcd_table_decode_err() {
+        let b: [u8; 6] = [0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF];
+
+        let enc = super::Table::new(super::Encoding::Std8421);
+        let mut s = String::new();
+        let r = enc.decode_bytes(&b, &mut s);
+
+        assert_eq!(Err(super::DecodeError::NonDecodable), r);
+    }
 }
 
 #[allow(dead_code)]
@@ -317,7 +328,7 @@ impl Table {
         Ok(())
     }
 
-    pub(crate) fn decode_bytes(&self, v: &[u8], s: &mut String) -> Result<(), DecodeError> {
+    fn decode_bytes(&self, v: &[u8], s: &mut String) -> Result<(), DecodeError> {
         for byte in v {
             let mut pair: [u8; 2] = [0, 0];
 
